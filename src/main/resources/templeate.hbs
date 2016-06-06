@@ -1,0 +1,17 @@
+#output as png image
+set terminal png size 1000,560
+#save file to "domain.png"
+set output "biz.png"
+#graph title
+set title "Biz Performance"
+set key invert reverse Left outside
+#nicer aspect ratio for image size
+#set size 1,0.7
+# y-axis grid
+set grid y
+#x-axis label
+set xlabel "requests"
+#y-axis label
+set ylabel "response time (ms)"
+#plot data from "biz.dat" using column 9 with smooth sbezier lines
+#and title of "Biz Performance" for the given data
