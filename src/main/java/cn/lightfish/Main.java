@@ -5,18 +5,14 @@ import com.github.jknack.handlebars.Template;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 
 /**
  * Created by karak on 16-6-5.
  */
 public class Main {
-
     /*
-
     ab: wrong number of arguments
     Usage: ab [options] [http://]hostname[:port]/path
     Options are:
@@ -52,45 +48,33 @@ public class Main {
         -e filename     Output CSV file with percentages served
         -r              Don't exit on socket receive errors.
         -h              Display usage information (this message)
-
-
-
-
      */
-
+    static String projectPath = Main.class.getProtectionDomain().getCodeSource().getLocation().getPath();
     static String command = "ab -n {{requests}} -c {{concurrency}} -g {{g}} {{url}}{{datasize}}";
-    static String templeateFile = "templeate.hbs";
-    static String plotStatement = "templeate.hbs";
-
+    static String templeateFile = projectPath + "/" + "templeate.hbs";
+    static String plotStatement = "\"{{g}}\" using 9 smooth sbezier with lines title \"{{datasize}}k\",\\\n";
 
     public static Args init() {
 
         Scanner sc = new Scanner(System.in);
-
         Args args = new Args();
 
         System.out.println("请输入总的请求数");
-        args.setRequests(sc.nextLine());
+        args.setRequests(sc.nextLine().trim());
 
         System.out.println("请输入并发数");
-        args.setRequests(sc.nextLine());
+        args.setConcurrency(sc.nextLine().trim());
 
         System.out.println("tsv文件存放文件夹路径,文件名本程序自动命名");
-        args.setG(sc.nextLine().replace("\\","/"));
+        args.setG(sc.nextLine().replace("\\", "/").trim());
 
-        /*
-        System.out.println("请求数据大小:1 2 4 8 16 32 64");
-        args.setDatasize(sc.nextLine());
-        */
-
-        System.out.println("测试的URL,格式:[http://]hostname[:port]/path");
-        args.setUrl(sc.nextLine());
+        System.out.println("测试的URL,格式:[http://]hostname[:port]");
+        args.setUrl(sc.nextLine().trim());
 
         return args;
     }
 
     public static void main(String[] args) throws Exception {
-
 
         Args parram = init();
         Handlebars handlebars = new Handlebars();
@@ -99,39 +83,44 @@ public class Main {
 
         model.put("requests", parram.getRequests());
         model.put("concurrency", parram.getConcurrency());
-        model.put("g", parram.getG());
         model.put("url", parram.getUrl());
 
+        String gPath = parram.getG();
         Template templateCommand = handlebars.compileInline(command);
-        Template templateGnuglot = handlebars.compile(templeateFile);
         String head = FileUtils.readFileToString(new File(templeateFile));
+        Template templatePlotStatement = handlebars.compileInline(plotStatement);
 
+        List<String> list = new ArrayList<String>();
 
         for (int i = 1; i <= 64; i *= 2) {
+
             String number = Integer.valueOf(i).toString();
+
             model.put("datasize", number);
+            String fileName = gPath + "/" + number + ".tsv";
+            model.put("g", fileName);
 
             String res = templateCommand.apply(model);
             System.out.println(res);
 
+            String n;
+
             if (i == 1) {
-                String first = "plot \""+"K:/lightfish/apache-1.tsv\" using 9 smooth sbezier with lines title \"concurrency 1\",\\";
+                n = "plot \"" + fileName + "\" using 9 smooth sbezier with lines title \"1k\",\\\n";
             } else if (i == 64) {
-                String end = "\"K:/lightfish/apache-32.tsv\" using 9 smooth sbezier with lines title \"concurrency 8\"";
+                n = "\"" + fileName + "\" using 9 smooth sbezier with lines title \"64k\"";
             } else {
-                String n = "\"K:/lightfish/apache-2.tsv\" using 9 smooth sbezier with lines title \"concurrency 2\",\\";
+                n = templatePlotStatement.apply(model);
             }
-            templateGnuglot.apply(model);
+            list.add(n);
         }
-        {
+        System.out.println();
+        String result = head + "\n";
 
-
-            String res = template.apply(model);
-            System.out.println(res);
-
+        for (String i : list) {
+            result += i;
         }
 
-
+        System.out.println(result);
     }
-
 }
