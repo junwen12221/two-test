@@ -50,7 +50,7 @@ public class Main {
         -h              Display usage information (this message)
      */
     static String projectPath = Main.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-    static String command = "ab -n {{requests}} -c {{concurrency}} -g {{g}} {{url}}{{datasize}}";
+    static String command = "ab -n {{requests}} -c {{concurrency}} -g {{g}} {{url}}/{{datasize}}";
     static String templeateFile = projectPath + "/" + "templeate.hbs";
     static String plotStatement = "\"{{g}}\" using 9 smooth sbezier with lines title \"{{datasize}}k\",\\\n";
 
@@ -101,7 +101,7 @@ public class Main {
             model.put("g", fileName);
 
             String res = templateCommand.apply(model);
-            System.out.println(res);
+            System.out.println(res.replace("//", "/"));
 
             String n;
 
